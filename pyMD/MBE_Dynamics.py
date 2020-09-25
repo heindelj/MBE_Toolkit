@@ -20,7 +20,7 @@ if __name__ == '__main__':
     
     fragments = Fragments(ifile)
     ttm21f = TTM(21)
-    mbe_ff = MBE_Potential(4, fragments, ttm21f)
+    mbe_ff = MBE_Potential(2, fragments, ttm21f)
 
     geometry = np.vstack(fragments.fragments)
     
@@ -28,45 +28,43 @@ if __name__ == '__main__':
     
 
     equilibration_output = [
-        ("step",                "w6_dynamics_equil_full.md"),
-        ("time",                "w6_dynamics_equil_full.md"),
-        ("potential_energy",    "w6_dynamics_equil_full.md"),
-        ("kinetic_energy",      "w6_dynamics_equil_full.md"),
-        ("total_energy",        "w6_dynamics_equil_full.md"),
-        ("temperature",         "w6_dynamics_equil_full.md"),
-        ("geometry",            "w6_dynamics_geometry_equil_full.xyz"),
-        ("velocity",            "w6_dynamics_velocity_equil_full.xyz")
+        ("step",                              "w6_dynamics_equil_2body.md"),
+        ("time",                              "w6_dynamics_equil_2body.md"),
+        ("potential_energy",                  "w6_dynamics_equil_2body.md"),
+        ("kinetic_energy",                    "w6_dynamics_equil_2body.md"),
+        ("total_energy",                      "w6_dynamics_equil_2body.md"),
+        ("temperature",                       "w6_dynamics_equil_2body.md"),
+        ("geometry",                 "w6_dynamics_geometry_equil_2body.xyz"),
+        ("velocity",                 "w6_dynamics_velocity_equil_2body.xyz")
     ]
 
     production_output = [
-        ("step",                "w6_dynamics_production_full.md"),
-        ("time",                "w6_dynamics_production_full.md"),
-        ("potential_energy",    "w6_dynamics_production_full.md"),
-        ("kinetic_energy",      "w6_dynamics_production_full.md"),
-        ("total_energy",        "w6_dynamics_production_full.md"),
-        ("temperature",         "w6_dynamics_production_full.md"),
-        ("geometry",            "w6_dynamics_geometry_production_full.xyz"),
-        ("velocity",            "w6_dynamics_velocity_production_full.xyz"),
-        ("force",               "w6_dynamics_forces_production_full.xyz")
+        ("step",                         "w6_dynamics_production_2body.md"),
+        ("time",                         "w6_dynamics_production_2body.md"),
+        ("potential_energy",             "w6_dynamics_production_2body.md"),
+        ("kinetic_energy",               "w6_dynamics_production_2body.md"),
+        ("total_energy",                 "w6_dynamics_production_2body.md"),
+        ("temperature",                  "w6_dynamics_production_2body.md"),
+        ("geometry",            "w6_dynamics_geometry_production_2body.xyz"),
+        ("velocity",            "w6_dynamics_velocity_production_2body.xyz"),
+        ("force",                 "w6_dynamics_forces_production_2body.xyz")
     ]
 
     # time step
     ts=20.7
 
-    #mbe_ff.evaluate_on_geometry,
     ####### INTEGRATORS FOR EQUILIBRATION AND PRODUCTION #######
     thermostatted_equilibration = Langevin_Thermostat(geometry, 
                                      atom_masses, 
-                                     ttm21f.evaluate,
+                                     mbe_ff.evaluate_on_geometry,
                                      dt=ts,
                                      temperature=300,
                                      alpha=25.0)
 
     nve_production = Velocity_Verlet(geometry, 
                                      atom_masses, 
-                                     ttm21f.evaluate,
-                                     dt=ts,
-                                     initial_velocities=initial_velocities)
+                                     mbe_ff.evaluate_on_geometry,
+                                     dt=ts)
 
     ####### LOGGERS FOR EQUILIBRATION AND PRODUCTION #######
     log_equil      = Logger(equilibration_output, 5, fragments.atom_labels)
@@ -75,7 +73,7 @@ if __name__ == '__main__':
     ####### DYNAMICS MANAGERS FOR EQUILIBRATION AND PRODUCTION #######
     dynamics_equil =      Dynamics(thermostatted_equilibration,
                                    log_equil,
-                                   max_iterations=100000) # .05 ns equilibration in NVT
+                                   max_iterations=200000) # .1 ns equilibration in NVT
 
     dynamics_production = Dynamics(nve_production,
                                    log_production,

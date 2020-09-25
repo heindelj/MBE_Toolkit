@@ -20,7 +20,8 @@ class Potential:
 
 class TTM(Potential):
     import os
-    os.environ['LD_LIBRARY_PATH'] = os.getcwd()
+    lib_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../bin")
+    os.environ['LD_LIBRARY_PATH'] = lib_path
     try:
         import ttm
     except ImportError:

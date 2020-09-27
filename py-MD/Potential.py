@@ -1,4 +1,3 @@
-
 import sys
 import numpy as np
 
@@ -20,18 +19,24 @@ class Potential:
 
 class TTM(Potential):
     import os
-    lib_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../bin")
-    os.environ['LD_LIBRARY_PATH'] = lib_path
+    import subprocess
+    lib_path = os.path.join(os.path.dirname(__file__), "..", "bin")
+    copy_command = "cp " + lib_path + '/ttm*.so' + " ."
+    subprocess.call(copy_command, shell=True)
+    os.environ['LD_LIBRARY_PATH'] = os.getcwd()
     try:
         import ttm
     except ImportError:
         print("Did not find ttm module. Make sure you have compiled it and the TTM library can be linked against.")
         sys.exit(1)
+        
     def __init__(self, model=21):
         """Evaluates the energy and gradients of the TTM family of potentials.
 
         Args:
             model (int, optional): The TTM model which will be used. Options are 2, 21, and 3. Defaults to 21.
+            name_of_dll (str, optional): If the dll compiles to a different name than the default, this must be provided
+            path_to_dll (str, optional): The absolute path to the dll (not including name) if it is different than ../bin 
         """
         self.model = model
         possible_models = [2, 21, 3]

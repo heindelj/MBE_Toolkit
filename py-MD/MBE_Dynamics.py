@@ -8,7 +8,7 @@ from Masses import get_mass_of_element
 from Logger import Logger
 
 import numpy as np
-import sys, time
+import sys, os, time
 
 
 if __name__ == '__main__':
@@ -28,31 +28,32 @@ if __name__ == '__main__':
     
 
     equilibration_output = [
-        ("step",                              "w6_dynamics_equil_2body.md"),
-        ("time",                              "w6_dynamics_equil_2body.md"),
-        ("potential_energy",                  "w6_dynamics_equil_2body.md"),
-        ("kinetic_energy",                    "w6_dynamics_equil_2body.md"),
-        ("total_energy",                      "w6_dynamics_equil_2body.md"),
-        ("temperature",                       "w6_dynamics_equil_2body.md"),
-        ("geometry",                 "w6_dynamics_geometry_equil_2body.xyz"),
-        ("velocity",                 "w6_dynamics_velocity_equil_2body.xyz")
+        ("step",                              "w6_dynamics_equil_300K_2body.md"),
+        ("time",                              "w6_dynamics_equil_300K_2body.md"),
+        ("potential_energy",                  "w6_dynamics_equil_300K_2body.md"),
+        ("kinetic_energy",                    "w6_dynamics_equil_300K_2body.md"),
+        ("total_energy",                      "w6_dynamics_equil_300K_2body.md"),
+        ("temperature",                       "w6_dynamics_equil_300K_2body.md"),
+        ("geometry",                 "w6_dynamics_geometry_equil_300K_2body.xyz"),
+        ("velocity",                 "w6_dynamics_velocity_equil_300K_2body.xyz")
     ]
 
     production_output = [
-        ("step",                         "w6_dynamics_production_2body.md"),
-        ("time",                         "w6_dynamics_production_2body.md"),
-        ("potential_energy",             "w6_dynamics_production_2body.md"),
-        ("kinetic_energy",               "w6_dynamics_production_2body.md"),
-        ("total_energy",                 "w6_dynamics_production_2body.md"),
-        ("temperature",                  "w6_dynamics_production_2body.md"),
-        ("geometry",            "w6_dynamics_geometry_production_2body.xyz"),
-        ("velocity",            "w6_dynamics_velocity_production_2body.xyz"),
-        ("force",                 "w6_dynamics_forces_production_2body.xyz")
+        ("step",                         "w6_dynamics_production_300K_2body.md"),
+        ("time",                         "w6_dynamics_production_300K_2body.md"),
+        ("potential_energy",             "w6_dynamics_production_300K_2body.md"),
+        ("kinetic_energy",               "w6_dynamics_production_300K_2body.md"),
+        ("total_energy",                 "w6_dynamics_production_300K_2body.md"),
+        ("temperature",                  "w6_dynamics_production_300K_2body.md"),
+        ("geometry",            "w6_dynamics_geometry_production_300K_2body.xyz"),
+        ("velocity",            "w6_dynamics_velocity_production_300K_2body.xyz"),
+        ("force",                 "w6_dynamics_forces_production_300K_2body.xyz")
     ]
 
     # time step
     ts=20.7
 
+    #mbe_ff.evaluate_on_geometry
     ####### INTEGRATORS FOR EQUILIBRATION AND PRODUCTION #######
     thermostatted_equilibration = Langevin_Thermostat(geometry, 
                                      atom_masses, 

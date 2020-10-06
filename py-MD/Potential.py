@@ -17,27 +17,45 @@ class Potential:
     def evaluate(self, coords):
         raise NotImplementedError
 
-class TTM(Potential):
-    import os
-    import subprocess
-    lib_path = os.path.join(os.path.dirname(__file__), "..", "bin")
-    copy_command = "cp " + lib_path + '/ttm*.so' + " ."
-    subprocess.call(copy_command, shell=True)
-    os.environ['LD_LIBRARY_PATH'] = os.getcwd()
-    try:
-        import ttm
-    except ImportError:
-        print("Did not find ttm module. Make sure you have compiled it and the TTM library can be linked against.")
-        sys.exit(1)
-        
+    def import_potential(self, dll_filenames: list, name_of_module: str):
+        """
+            Imports a potential which is accessed via one or multiple dlls. The dlls should be stored in pyMD/bin.
+            dll_filenames can be something like "ttm*" where "*" is a wildcard for each dll file.
+            Also takes the name of python module, as a string, which calls the potential
+
+            dll_filenames: a list of filenames to all needed dlls or a keyword to get multiple of them.
+            name_of_module: a string which is the name of a module that wraps the potential to be called.
+        """
+        import os, subprocess, importlib
+        lib_path = os.path.join(os.path.dirname(__file__), "..", "bin")
+        if type(dll_filenames) is not list:
+            print("dll_filenames should be a list of files to access.")
+            sys.exit(1)
+        for file_name in dll_filenames:
+            copy_command = "cp " + lib_path + os.path.sep + file_name + " " + os.path.dirname(__file__)
+            subprocess.call(copy_command, shell=True)
+        old_dir = os.getcwd()
+        os.chdir(os.path.dirname(__file__))
+        os.environ['LD_LIBRARY_PATH'] = os.getcwd()
+        try:
+            module = importlib.import_module(name_of_module)
+            os.chdir(old_dir)
+            for file_name in dll_filenames:
+                remove_command = "rm " + os.path.join(os.path.dirname(__file__), file_name)
+                subprocess.call(remove_command, shell=True)
+            return module
+        except ImportError:
+            print("Did not find potential module. Make sure you have compiled it and the library can be linked against.")
+            sys.exit(1)
+
+class TTM(Potential):  
     def __init__(self, model=21):
         """Evaluates the energy and gradients of the TTM family of potentials.
 
         Args:
             model (int, optional): The TTM model which will be used. Options are 2, 21, and 3. Defaults to 21.
-            name_of_dll (str, optional): If the dll compiles to a different name than the default, this must be provided
-            path_to_dll (str, optional): The absolute path to the dll (not including name) if it is different than ../bin 
         """
+        self.pot_module = self.import_potential(["ttm*"], "ttm")
         self.model = model
         possible_models = [2, 21, 3]
         if self.model not in possible_models:

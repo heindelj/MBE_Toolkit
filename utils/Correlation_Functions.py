@@ -49,7 +49,7 @@ class Correlation_Functions:
         """
         num_blocks = int(len(A) / block_width) - 1
         accumulated_signal = np.zeros(int(block_width / 2))
-        for i in tqdm(range(num_blocks)):
+        for i in range(num_blocks):
             _, signal = self.acf(A[i*block_width:(i+1)*block_width], frame_spacing)
             accumulated_signal += signal
         accumulated_signal /= num_blocks

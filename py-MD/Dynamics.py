@@ -28,17 +28,18 @@ class Dynamics:
         # logging dictionary
         # all of these need to be update to grab data from the integrator.
         self.logging_vtable = {
-            "step":                self.get_step,
-            "time":                self.get_time,
-            "momentum":            self.get_momentum,
-            "potential_energy":    self.get_potential_energy,
-            "kinetic_energy":      self.get_kinetic_energy,
-            "mean_kinetic_energy": self.get_average_kinetic_energy,
-            "total_energy":        self.get_total_energy,
-            "temperature":         self.get_temperature_from_kinetic_energy,
-            "geometry":            self.get_geometry,
-            "velocity":            self.get_velocity,
-            "force":               self.get_forces
+            "step":                self.log_step,
+            "time":                self.log_time,
+            "momentum":            self.log_momentum,
+            "potential_energy":    self.log_potential_energy,
+            "kinetic_energy":      self.log_kinetic_energy,
+            "mean_kinetic_energy": self.log_average_kinetic_energy,
+            "total_energy":        self.log_total_energy,
+            "temperature":         self.log_temperature_from_kinetic_energy,
+            "geometry":            self.log_geometry,
+            "velocity":            self.log_velocity,
+            "force":               self.log_forces,
+            "extras":              self.log_extras
         }
     
 
@@ -55,52 +56,64 @@ class Dynamics:
         observables which the user can ask for via self.log. If the observable is not 
         in the dictionary, the request is ignored.
 
-        Refactor: This needs to be here because of the call to the logging_vtable.
-        Maybe there is a way to allow the logging class to call the functions in the vtable?
+        Passing the key prevents possible typos between the vtable and getter function.
         """
         if (self.get_step() % self.log.logging_stride) == 0:
             for key in self.log.keys:
                 if key in self.logging_vtable:
-                    self.log.data_log[key].append(self.logging_vtable[key]())
+                    self.logging_vtable[key](key)
                 else:
                     print(f"Received invalid observable. Please check that there is a getter for the observable {key}")
                     sys.exit(1)
         self.log.log()
 
     def get_step(self):
-        return (self.current_step)
+        return self.current_step
 
-    def get_time(self):
-        return (self.current_step) * self.integrator.dt
+    def log_step(self, key):
+        self.log.data_log[key].append(self.current_step)
 
-    def get_geometry(self):
-        return self.integrator.current_geometry / 1.88973 # bohr to angstrom UNITS
+    def log_time(self, key):
+        self.log.data_log[key].append(self.current_step * self.integrator.dt)
+
+    def log_geometry(self, key):
+        self.log.data_log[key].append(self.integrator.current_geometry / 1.88973) # bohr to angstrom UNITS
     
-    def get_velocity(self):
-        return self.integrator.current_velocities / 1.88973 # bohr to angstrom UNITS
+    def log_velocity(self, key):
+        self.log.data_log[key].append(self.integrator.current_velocities / 1.88973) # bohr to angstrom UNITS
 
-    def get_forces(self):
-        return self.integrator.current_accelerations * self.integrator.masses[:, np.newaxis]
+    def log_forces(self, key):
+        self.log.data_log[key].append(self.integrator.current_accelerations * self.integrator.masses[:, np.newaxis])
 
-    def get_temperature_from_kinetic_energy(self):
+    def log_extras(self, key=None):
+        for key, value in self.integrator.extras_from_potential.items():
+            self.log.data_log[key].append(value)
+            if key not in self.log.file_log:
+                self.log.file_log[key] = key + ".dat"
+                # just open to delete previous file
+                with open(self.log.file_log[key], 'w'):
+                    pass
+                self.log.special_logging_keys.append(key)
+
+    def log_temperature_from_kinetic_energy(self, key):
         """Returns the temperature according to the average kinetic energy in kelvin.
         <E>=3/2kT; T=2/3<E> (k=1); <E>=1/2m<v^2> where <v^2> is the rms velocity
         """
-        return self.integrator.get_temperature()  * 315775.0248 #UNITS
+        self.log.data_log[key].append(self.integrator.get_temperature()  * 315775.0248) #UNITS
     
-    def get_momentum(self):
-        return self.integrator.current_velocities * self.integrator.masses[:, np.newaxis]
+    def log_momentum(self, key):
+        self.log.data_log[key].append(self.integrator.get_momentum())
 
-    def get_potential_energy(self):
-        return self.integrator.current_energy
+    def log_potential_energy(self, key):
+        self.log.data_log[key].append(self.integrator.energy)
 
-    def get_kinetic_energy(self):
-        return self.integrator.get_kinetic_energy()
+    def log_kinetic_energy(self, key):
+        self.log.data_log[key].append(self.integrator.get_kinetic_energy())
     
-    def get_average_kinetic_energy(self):
-        momentum = self.get_momentum()
+    def log_average_kinetic_energy(self, key):
+        momentum = self.integrator.get_momentum()
         kinetic_energy = np.einsum('ij,ij->i', momentum, momentum) / (2 * self.integrator.masses)
-        return np.mean(kinetic_energy)
+        self.log.data_log[key].append(np.mean(kinetic_energy))
 
-    def get_total_energy(self):
-        return self.integrator.current_energy + self.get_kinetic_energy()
+    def log_total_energy(self, key):
+        self.log.data_log[key].append(self.integrator.energy + self.integrator.get_kinetic_energy())

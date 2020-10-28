@@ -168,6 +168,7 @@ Contains
    !-------------------------------------------------------------------------!
    ! initialize (if neccesary) some arrays, needed for following calculations!
    !-------------------------------------------------------------------------!
+   imodel=21
    call init_ttm2f(Nw)
    dRR = 0.d0
    dRM = 0.d0

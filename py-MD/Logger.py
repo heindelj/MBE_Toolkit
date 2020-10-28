@@ -16,27 +16,34 @@ class Logger:
         self.keys, self.files = map(list, zip(*keys_and_files))
         self.data_log = defaultdict(list)
         self.file_log = dict(zip(self.keys, self.files))
+        self.file_log.pop('extras', None)
+
         self.logging_stride = logging_stride
         self.logging_counter = 0
 
         # atoms for logging the special logging functions
         self.atom_labels = atom_labels
 
+        # check the type of the value and log appropriately
         self.special_logging_functions = {
-            "geometry": self.log_matrix,
-            "velocity": self.log_matrix,
-            "force"   : self.log_matrix
+            np.ndarray: self.log_matrix
         }
+
+        self.special_logging_keys = [
+            "geometry",
+            "velocity",
+            "force",
+        ]
 
         # initialize all of the non-special files for output
         keys_by_file = defaultdict(list)
         for key, file in self.file_log.items():
-            if key not in self.special_logging_functions:
+            if key not in self.special_logging_keys:
                 keys_by_file[file].append(key)
             else:
                 # just open the file so it deletes anything that used to be there
-                with open(file, 'w') as f:
-                    pass
+                    with open(file, 'w') as f:
+                        pass
 
         
         for file, key_label in keys_by_file.items():
@@ -62,8 +69,8 @@ class Logger:
         """
         values_by_file = defaultdict(list)
         for key, value in self.file_log.items():
-            if key in self.special_logging_functions:
-                self.special_logging_functions[key](key)
+            if key in self.special_logging_keys:
+                self.special_logging_functions[type(self.data_log[key][0])](key)
             else:
                 values_by_file[value].append(self.data_log[key])
         

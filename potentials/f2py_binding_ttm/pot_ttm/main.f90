@@ -60,11 +60,11 @@ print*,'----------Derivatives (kcal/mol/A)  ---------------'
 !enddo
 !the lines are stored with oxygens first and then the hydrogens
 !but the hydrogens are swapped from the original positions in the file
-do iw=1,Nw
-   write(*,'(i3,3x,3(f12.6,2x))')iw,dRR(1:3,iw)
-   write(*,'(i3,3x,3(f12.6,2x))')iw,dRR(1:3,Nw+2*iw)
-   write(*,'(i3,3x,3(f12.6,2x))')iw,dRR(1:3,Nw+2*iw-1)
-enddo
+!do iw=1,Nw
+!   write(*,'(i3,3x,3(f12.6,2x))')iw,dRR(1:3,iw)
+!   write(*,'(i3,3x,3(f12.6,2x))')iw,dRR(1:3,Nw+2*iw)
+!   write(*,'(i3,3x,3(f12.6,2x))')iw,dRR(1:3,Nw+2*iw-1)
+!enddo
 !***
 !***
 !***   Test numerical and analytical derivatives
@@ -87,33 +87,33 @@ enddo
 !***
 !***   Minimize energy
 !***
-!print*,'----------  GEOMETRY OPTIMIZATION -------------------'
-!Neqs = 3*3*Nw
-!allocate(p(neqs))
-!allocate(g(neqs))
-!p = reshape(RR, (/neqs/))
-!call min_func(neqs, p, g, fret)
-!print*,'fret=', fret
-!gtol = 1.d-8
-!tolx = 1.d-8
-!stpmx = 0.01d0
-!iter=1000
-!iprint=10
-!
-!call dfpmin(neqs, p, gtol, tolx, stpmx, iter, fret, iprint, min_func)
-!
-!RR = reshape(p,(/3, 3*nw/))
-!call potential(Nw,RR, dRR, Energy)
-!print*,'Final minimized Energy = ', Energy
-!open(15, file='minimum.xyz', status='unknown')
-!write(15,*)3*nw
-!write(15,*)Energy
-!do iw=1, nw
-!   write(15,'(a3,3(1x, f15.8))')'O', RR(1:3, iw)
-!   write(15,'(a3,3(1x, f15.8))')'H', RR(1:3, iw+Nw)
-!   write(15,'(a3,3(1x, f15.8))')'H', RR(1:3, iw+2*Nw)
-!enddo
-!close(15)
+print*,'----------  GEOMETRY OPTIMIZATION -------------------'
+Neqs = 3*3*Nw
+allocate(p(neqs))
+allocate(g(neqs))
+p = reshape(RR, (/neqs/))
+call min_func(neqs, p, g, fret)
+print*,'fret=', fret
+gtol = 1.d-8
+tolx = 1.d-8
+stpmx = 0.01d0
+iter=1000
+iprint=10
+
+call dfpmin(neqs, p, gtol, tolx, stpmx, iter, fret, iprint, min_func)
+
+RR = reshape(p,(/3, 3*nw/))
+call potential(Nw,RR, dRR, Energy)
+print*,'Final minimized Energy = ', Energy
+open(15, file='minimum.xyz', status='unknown')
+write(15,*)3*nw
+write(15,*)Energy
+do iw=1, nw
+   write(15,'(a3,3(1x, f15.8))')'O', RR(1:3, iw)
+   write(15,'(a3,3(1x, f15.8))')'H', RR(1:3, iw+Nw)
+   write(15,'(a3,3(1x, f15.8))')'H', RR(1:3, iw+2*Nw)
+enddo
+close(15)
 
 ! deallocate all arrays
 !***

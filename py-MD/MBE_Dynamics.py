@@ -13,14 +13,14 @@ import sys, os, time
 
 if __name__ == '__main__':
     try:
-        ifile = sys.argv[1]
+        ifile, mbe_order, input_temperature = sys.argv[1], int(sys.argv[2]), float(sys.argv[3])
     except:
-        print("Didn't get an xyz file.")
+        print("[xyz file] [mbe order] [temperature]")
         sys.exit(1)
     
     fragments = Fragments(ifile)
-    ttm21f = TTM(21)
-    mbe_ff = MBE_Potential(2, fragments, ttm21f)
+    ttm21f = TTM(["ttm*"], "ttm", "ttm_from_f2py", model=21)
+    mbe_ff = MBE_Potential(mbe_order, fragments, ttm21f, nproc=8, return_extras=True)
 
     geometry = np.vstack(fragments.fragments)
     
@@ -28,26 +28,27 @@ if __name__ == '__main__':
     
 
     equilibration_output = [
-        ("step",                              "w6_dynamics_equil_300K_2body.md"),
-        ("time",                              "w6_dynamics_equil_300K_2body.md"),
-        ("potential_energy",                  "w6_dynamics_equil_300K_2body.md"),
-        ("kinetic_energy",                    "w6_dynamics_equil_300K_2body.md"),
-        ("total_energy",                      "w6_dynamics_equil_300K_2body.md"),
-        ("temperature",                       "w6_dynamics_equil_300K_2body.md"),
-        ("geometry",                 "w6_dynamics_geometry_equil_300K_2body.xyz"),
-        ("velocity",                 "w6_dynamics_velocity_equil_300K_2body.xyz")
+        ("step",                              "w6_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("time",                              "w6_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("potential_energy",                  "w6_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("kinetic_energy",                    "w6_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("total_energy",                      "w6_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("temperature",                       "w6_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("geometry",                 "w6_dynamics_geometry_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.xyz"),
+        ("velocity",                 "w6_dynamics_velocity_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.xyz"),
+        ("extras", None)
     ]
 
     production_output = [
-        ("step",                         "w6_dynamics_production_300K_2body.md"),
-        ("time",                         "w6_dynamics_production_300K_2body.md"),
-        ("potential_energy",             "w6_dynamics_production_300K_2body.md"),
-        ("kinetic_energy",               "w6_dynamics_production_300K_2body.md"),
-        ("total_energy",                 "w6_dynamics_production_300K_2body.md"),
-        ("temperature",                  "w6_dynamics_production_300K_2body.md"),
-        ("geometry",            "w6_dynamics_geometry_production_300K_2body.xyz"),
-        ("velocity",            "w6_dynamics_velocity_production_300K_2body.xyz"),
-        ("force",                 "w6_dynamics_forces_production_300K_2body.xyz")
+        ("step",                         "w6_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("time",                         "w6_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("potential_energy",             "w6_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("kinetic_energy",               "w6_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("total_energy",                 "w6_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("temperature",                  "w6_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("geometry",            "w6_dynamics_geometry_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.xyz"),
+        ("velocity",            "w6_dynamics_velocity_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.xyz"),
+        ("force",                 "w6_dynamics_forces_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.xyz")
     ]
 
     # time step
@@ -59,7 +60,7 @@ if __name__ == '__main__':
                                      atom_masses, 
                                      mbe_ff.evaluate_on_geometry,
                                      dt=ts,
-                                     temperature=300,
+                                     temperature=input_temperature,
                                      alpha=25.0)
 
     nve_production = Velocity_Verlet(geometry, 

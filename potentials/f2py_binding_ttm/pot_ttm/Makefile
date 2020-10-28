@@ -28,25 +28,23 @@ OBJ=$(addprefix ./, \
 	potential_mod.o \
 	dfpmin.o )
 
-#EXE=main.x
 SO=./ttm_all.so
 MODULE=ttm
 
-FFLAGS=-O2 -shared -fPIC
-PYFLAGS=-c -m
+FFLAGS=-O2 -fPIC
+LINKFLAGS= -O2 -fPIC -shared
+FPYCOMMAND= -c $(FPYSRC) -m $(MODULE) $(SO)
 
 library: $(OBJ)
-	        $(FC) $(FFLAGS) $(OBJ) $(INCLUDE_PATH) $(LIB_PATH) $(LIBSHDF) $(LIBS) -o $(SO)
-
+		$(FC) -o $(SO) $(LINKFLAGS) $(OBJ)
 all: $(OBJ)
-			$(FPY) $(PYFLAGS) $(MODULE) $(FPYSRC) $(SO)
-
+			$(FPY) $(FPYCOMMAND)
 $(OBJ) : Makefile
 
 %.o:%.f90
-	        $(FC) $(FFLAGS) $(DEFS) $(INCLUDE_PATH) -c $< -o $@
+	        $(FC) $(FFLAGS) -c $< -o $@
 %.o:%.F90
-	        $(FC) $(FFLAGS) $(DEFS) $(INCLUDE_PATH) -c $< -o $@
+	        $(FC) $(FFLAGS) -c $< -o $@
 
 clean: 
 	rm -rf $(OBJ) *.so *.o *.mod

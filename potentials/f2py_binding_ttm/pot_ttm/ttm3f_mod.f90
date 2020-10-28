@@ -121,7 +121,7 @@ Contains
 
 
 
-   subroutine ttm3f(Nw,RR,dRR,En)
+   subroutine ttm3f(Nw,RR,dRR,En) bind(C, name="ttm3f")
    !** for a system of "Nw" water molecules returns the potential energy (En) and 
    !** the derivatives of the energy wrt the atomic displacements (dRR).
    !** The coordinates of the atoms are found in the array "RR".
@@ -159,6 +159,7 @@ Contains
    !-------------------------------------------------------------------------!
    ! initialize (if neccesary) some arrays, needed for following calculations!
    !-------------------------------------------------------------------------!
+   imodel=3
    call init_ttm3f(Nw)
    dRR = 0.d0
    dRM = 0.d0

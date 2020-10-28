@@ -3,3 +3,5 @@ build/
 py_MD.egg-info
 dist
 __init__.py
+potentials/f2py_binding_ttm
+potentials/legacy_mbpol-master

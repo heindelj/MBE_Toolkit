@@ -25,6 +25,7 @@ class Integrator:
         self.current_geometry = geometry * 1.88973 # convert to bohr UNITS
         self.masses = masses * 1822.888486 # convert to atomic unit of masses UNITS
         self.potential_function = potential_function
+        self.extras_from_potential = {} # extras dictionary which may or may not passed from potential
         self.dt = dt
 
         self.current_velocities = np.zeros((len(self.masses), 3))
@@ -48,7 +49,11 @@ class Integrator:
     
     def update_energy_and_accelerations(self):
         """Makes the call to potential function"""
-        self.current_energy, self.current_accelerations = self.potential_function(self.current_geometry / 1.88973) #UNITS
+        potential_data = self.potential_function(self.current_geometry / 1.88973) #UNITS
+        if len(potential_data) == 2:
+            self.energy, self.current_accelerations = potential_data
+        elif len(potential_data) == 3:
+            self.energy, self.current_accelerations, self.extras_from_potential = potential_data
         self.current_accelerations /= self.masses[:, np.newaxis]
 
     def sample_maxwell_boltzmann_velocities(self, indices=None):
@@ -78,6 +83,9 @@ class Integrator:
     def get_kinetic_energy(self):
         kinetic_energy = 0.5 * self.masses * np.einsum('ij,ij->i', self.current_velocities, self.current_velocities)
         return np.sum(kinetic_energy)
+
+    def get_momentum(self):
+        return self.current_velocities * self.masses[:, np.newaxis]
     
     def get_temperature(self):
         # TODO: Make DOFs a parameter which is determined at construction based on

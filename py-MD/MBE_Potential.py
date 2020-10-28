@@ -4,20 +4,33 @@ from Potential import *
 import numpy as np
 from math import comb
 import sys, os, time
-import multiprocessing as mp
+from multiprocessing import Pool
 
 class MBE_Potential:
     """
     Implements an MBE potential which calls out to a Potential object and
     parses the output energy and forces
     """
-    def __init__(self, highest_order: int, fragments: Fragments, potential: Potential):
+    def __init__(self, highest_order: int, fragments: Fragments, potential: Potential, nproc=8, return_extras=False):
         self.highest_order = highest_order
         self.fragments = fragments
         self.potential = potential
-        nproc = 8
-        self._pool = mp.Pool(nproc)
+        self._pool = Pool(nproc)#, initializer=self.potential.initialize_potential())
+        self.return_extras = return_extras
     
+    def log_extras(self, nbody_energies, nbody_forces):
+        """
+        Logs all of the n-body energies and forces calculated and returns it as a dictionary
+        """
+        extras = {}
+        for i, nbody_force in enumerate(nbody_forces):
+            key = str(i+1) + "body_forces"
+            extras[key] = nbody_force
+        for i, nbody_energy in enumerate(nbody_energies):
+            key = str(i+1) + "body_energy"
+            extras[key] = nbody_energy
+        return extras
+
     def evaluate_on_fragments(self):
         """
         Uses the Potential object passed in to calculate the forces and energies for every fragment 
@@ -75,7 +88,10 @@ class MBE_Potential:
         #print(total_energy * 627.5)
         #print(total_forces * 627.5 / 1.88973)
 
-        return total_energy, total_forces
+        if not self.return_extras:
+            return total_energy, total_forces
+        else:
+            return total_energy, total_forces, self.log_extras(nbody_energies, nbody_forces)
 
     def evaluate_on_fragments_parallel(self):
         """
@@ -143,7 +159,10 @@ class MBE_Potential:
         #print(total_energy * 627.5)
         #print(total_forces * 627.5 / 1.88973)
 
-        return total_energy, total_forces
+        if not self.return_extras:
+            return total_energy, total_forces
+        else:
+            return total_energy, total_forces, self.log_extras(nbody_energies, nbody_forces)
 
     def evaluate_on_geometry(self, geometry):
         """This is a thin wrapper around evaluate_on_fragments() which allows
@@ -154,8 +173,12 @@ class MBE_Potential:
             geometry (ndarray): Nx3 array of cartesian coordinates
         """
         self.fragments.fragment_geometry(geometry)
-        energy, forces = self.evaluate_on_fragments()
-        return energy, forces
+        if not self.return_extras:
+            energy, forces = self.evaluate_on_fragments()
+            return energy, forces
+        else:
+            energy, forces, extras = self.evaluate_on_fragments()
+            return energy, forces, extras
     
     def evaluate_on_geometry_parallel(self, geometry):
         """This is a thin wrapper around evaluate_on_fragments() which allows
@@ -166,8 +189,12 @@ class MBE_Potential:
             geometry (ndarray): Nx3 array of cartesian coordinates
         """
         self.fragments.fragment_geometry(geometry)
-        energy, forces = self.evaluate_on_fragments_parallel()
-        return energy, forces
+        if not self.return_extras:
+            energy, forces = self.evaluate_on_fragments_parallel()
+            return energy, forces
+        else:
+            energy, forces, extras = self.evaluate_on_fragments_parallel()
+            return energy, forces, extras
 
 if __name__ == '__main__':
     try:
@@ -177,9 +204,15 @@ if __name__ == '__main__':
         sys.exit(1)
     
     fragments = Fragments(ifile)
-    ttm21f = TTM(21)
-    mbe_ff = MBE_Potential(4, fragments, ttm21f)
+    ttm21f = TTM(["ttm*"], "ttm", "ttm_from_f2py", 21)
+    #mbpol = MBPol()
+    mbe_order=10
+    mbe_ff = MBE_Potential(mbe_order, fragments, ttm21f, return_extras=True)
     
     start = time.time()
-    mbe_ff.evaluate_on_fragments_parallel()
-    print(time.time() - start)
+    energy, forces, extras = mbe_ff.evaluate_on_fragments()
+    for key, value in extras.items():
+        if "energy" in key:
+            print(key, ": ", "{:.6f}".format(value * 627.5), " ({:.2f})".format(value / energy * 100))
+    print("Total Energy: ", "{:.6f}".format(energy * 627.5), "kcal/mol")
+    print(time.time() - start, " seconds")

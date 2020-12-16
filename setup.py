@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-     name='py-MD',  
+     name='py_MD',  
      version='0.1',
      author="Joseph Heindel",
      author_email="heindelj@uw.edu",

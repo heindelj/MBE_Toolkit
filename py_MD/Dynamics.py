@@ -1,8 +1,8 @@
-import numpy as np
 from Logger import Logger
-import Integrator
+from Integrator import Integrator
 
 from typing import Callable
+import numpy as np
 import sys
 
 class Dynamics:

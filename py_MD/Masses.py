@@ -1,4 +1,3 @@
-
 import sys
 
 def get_mass_of_element(label: str, average=False):

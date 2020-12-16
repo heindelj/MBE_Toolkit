@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
      name='py_MD',  
-     version='0.2',
+     version='0.2.1',
      author="Joseph Heindel",
      author_email="heindelj@uw.edu",
      description="A molecular dynamics package in python",

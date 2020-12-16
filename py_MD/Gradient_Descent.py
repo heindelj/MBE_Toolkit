@@ -95,11 +95,11 @@ class Optimize:
                 self.step_size *= 1.1
                 print(f"Iteration {iteration}: Energy: {energy*627.5:.6f}, ({self.delta_energy*627.5:.6f}); Max Force: {self.current_max_force:.6f}; RMS Force: {self.current_rms_force:.6f}")
             else:
-                print("Converged Geometry:")
-                print(geometry)
-                return
+                print(f"Converged Geometry: Final Energy = {energy*627.5:.6f}")
+                return geometry
             
             if stop_early is True and iteration >= stop_early_iteration:
+                print(f"Stopped after {stop_early_iteration} iterations! Did not converge!")
                 return geometry
 
         print(f"Failed to converge in {self.max_iterations} steps!")
@@ -117,10 +117,11 @@ if __name__ == '__main__':
         sys.exit(1)
     
     fragments = Fragments(ifile)
-    ttm21f = TTM(21)
-    mbe_ff = MBE_Potential(6, fragments, ttm21f)
+    #ttm21f = TTM(["ttm*"], "ttm", "ttm_from_f2py", 21)
+    mbpol = MBPol()
+    mbe_ff = MBE_Potential(5, fragments, mbpol, return_extras=False)
 
-    optimizer = Optimize(np.vstack(fragments.fragments), mbe_ff.evaluate_on_geometry_parallel)
+    optimizer = Optimize(np.vstack(fragments.fragments), mbe_ff.evaluate_on_geometry)
 
     start = time.time()
     print(optimizer.gradient_descent())

@@ -161,6 +161,6 @@ class MBPol(Potential):
         coords=np.ascontiguousarray(coords, dtype=np.float64).flatten()
         grads = np.zeros_like(coords)
         self._fun(self._cnw, self._v, coords, grads)
-        return self._v[0] / 627.5, np.reshape(grads, (3 * self._nw, 3)) / 627.5 / 1.88973
+        return self._v[0] / 627.5, -np.reshape(grads, (3 * self._nw, 3)) / 627.5 / 1.88973
     def __call__(self, coords):
         return self.evaluate(coords)

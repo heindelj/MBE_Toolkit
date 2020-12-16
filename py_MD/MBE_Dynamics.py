@@ -28,27 +28,27 @@ if __name__ == '__main__':
     
 
     equilibration_output = [
-        ("step",                              "w6_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
-        ("time",                              "w6_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
-        ("potential_energy",                  "w6_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
-        ("kinetic_energy",                    "w6_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
-        ("total_energy",                      "w6_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
-        ("temperature",                       "w6_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
-        ("geometry",                 "w6_dynamics_geometry_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.xyz"),
-        ("velocity",                 "w6_dynamics_velocity_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.xyz"),
+        ("step",                              "w10_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("time",                              "w10_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("potential_energy",                  "w10_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("kinetic_energy",                    "w10_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("total_energy",                      "w10_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("temperature",                       "w10_dynamics_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("geometry",                 "w10_dynamics_geometry_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.xyz"),
+        ("velocity",                 "w10_dynamics_velocity_equil_"+str(input_temperature)+"K_"+str(mbe_order)+"body.xyz"),
         ("extras", None)
     ]
 
     production_output = [
-        ("step",                         "w6_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
-        ("time",                         "w6_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
-        ("potential_energy",             "w6_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
-        ("kinetic_energy",               "w6_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
-        ("total_energy",                 "w6_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
-        ("temperature",                  "w6_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
-        ("geometry",            "w6_dynamics_geometry_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.xyz"),
-        ("velocity",            "w6_dynamics_velocity_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.xyz"),
-        ("force",                 "w6_dynamics_forces_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.xyz")
+        ("step",                         "w10_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("time",                         "w10_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("potential_energy",             "w10_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("kinetic_energy",               "w10_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("total_energy",                 "w10_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("temperature",                  "w10_dynamics_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.md"),
+        ("geometry",            "w10_dynamics_geometry_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.xyz"),
+        ("velocity",            "w10_dynamics_velocity_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.xyz"),
+        ("force",                 "w10_dynamics_forces_production_"+str(input_temperature)+"K_"+str(mbe_order)+"body.xyz")
     ]
 
     # time step
@@ -58,14 +58,15 @@ if __name__ == '__main__':
     ####### INTEGRATORS FOR EQUILIBRATION AND PRODUCTION #######
     thermostatted_equilibration = Langevin_Thermostat(geometry, 
                                      atom_masses, 
-                                     mbe_ff.evaluate_on_geometry,
+                                     ttm21f.evaluate,
                                      dt=ts,
                                      temperature=input_temperature,
                                      alpha=25.0)
 
-    nve_production = Velocity_Verlet(geometry, 
-                                     atom_masses, 
-                                     mbe_ff.evaluate_on_geometry,
+    nve_production = Velocity_Verlet(geometry,
+                                     atom_masses,
+                                     ttm21f.evaluate,
+                                     temperature=input_temperature,
                                      dt=ts)
 
     ####### LOGGERS FOR EQUILIBRATION AND PRODUCTION #######
@@ -87,6 +88,7 @@ if __name__ == '__main__':
     start = time.time()
     # TODO Implement class method to initialize one Integrator from another Integrators state
     dynamics_production.integrator.current_velocities = dynamics_equil.integrator.current_velocities
+    dynamics_production.integrator.rescale_velocities()
     dynamics_production.integrator.current_geometry = dynamics_equil.integrator.current_geometry
     dynamics_production.integrator.current_accelerations = dynamics_equil.integrator.current_accelerations
     dynamics_production.propagate()

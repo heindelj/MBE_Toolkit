@@ -19,7 +19,7 @@ if __name__ == '__main__':
         sys.exit(1)
     
     fragments = Fragments(ifile)
-    ttm21f = TTM(["ttm*"], "ttm", "ttm_from_f2py", model=21)
+    ttm21f = TTM("/home/heindelj/Research/Sotiris/MBE_Dynamics/MBE_Dynamics_Home_Code/pyMD/bin")
     mbe_ff = MBE_Potential(mbe_order, fragments, ttm21f, nproc=8, return_extras=True)
 
     geometry = np.vstack(fragments.fragments)
@@ -58,14 +58,14 @@ if __name__ == '__main__':
     ####### INTEGRATORS FOR EQUILIBRATION AND PRODUCTION #######
     thermostatted_equilibration = Langevin_Thermostat(geometry, 
                                      atom_masses, 
-                                     ttm21f.evaluate,
+                                     mbe_ff.evaluate_on_geometry,
                                      dt=ts,
                                      temperature=input_temperature,
                                      alpha=25.0)
 
     nve_production = Velocity_Verlet(geometry,
                                      atom_masses,
-                                     ttm21f.evaluate,
+                                     mbe_ff.evaluate_on_geometry,
                                      temperature=input_temperature,
                                      dt=ts)
 

@@ -1,5 +1,4 @@
 from .Fragments import Fragments
-from .Dynamics import Dynamics
 from .Potential import *
 import numpy as np
 from math import comb
@@ -15,7 +14,7 @@ class MBE_Potential:
         self.highest_order = highest_order
         self.fragments = fragments
         self.potential = potential
-        self._pool = Pool(nproc)#, initializer=self.potential.initialize_potential())
+        self._pool = Pool(nproc)
         self.return_extras = return_extras
     
     def log_extras(self, nbody_energies, nbody_forces):
@@ -76,10 +75,14 @@ class MBE_Potential:
         
         # multiply each many-body sum by the appropriate combinatorial factor
         N = len(self.fragments.fragments)
-        for iMBE in range(1, self.highest_order):
-            for i in range(iMBE+1):
-                nbody_energies[iMBE] += (-1)**i * comb(N-(iMBE+1)+i,i) * energy_sum[iMBE-i]
-                nbody_forces[iMBE]   += (-1)**i * comb(N-(iMBE+1)+i,i) * forces_sum[iMBE-i]
+        try:
+            for iMBE in range(1, self.highest_order):
+                for i in range(iMBE+1):
+                    nbody_energies[iMBE] += (-1)**i * comb(N-(iMBE+1)+i,i) * energy_sum[iMBE-i]
+                    nbody_forces[iMBE]   += (-1)**i * comb(N-(iMBE+1)+i,i) * forces_sum[iMBE-i]
+        except ValueError:
+            print(f"The order of the MBE being evaluated seems to be larger than the number of fragments, {N}. Check that you haven't asked for too high of an MBE by asking for a {self.highest_order}-body expansion.")
+            sys.exit(1)
 
         # accumulate many-body energies and forces
         total_energy = np.sum(nbody_energies)
@@ -204,13 +207,14 @@ if __name__ == '__main__':
         sys.exit(1)
     
     fragments = Fragments(ifile)
-    ttm21f = TTM(["ttm*"], "ttm", "ttm_from_f2py", 21)
-    #mbpol = MBPol()
-    mbe_order=10
+    ttm21f = TTM("/home/heindelj/Research/Sotiris/MBE_Dynamics/MBE_Dynamics_Home_Code/pyMD/bin/")
+    #mbpol = MBPol("/home/heindelj/Research/Sotiris/MBE_Dynamics/MBE_Dynamics_Home_Code/pyMD/bin")
+    mbe_order=6
     mbe_ff = MBE_Potential(mbe_order, fragments, ttm21f, return_extras=True)
     
     start = time.time()
-    energy, forces, extras = mbe_ff.evaluate_on_fragments()
+    energy, forces, extras = mbe_ff.evaluate_on_fragments_parallel()
+    print(forces)
     for key, value in extras.items():
         if "energy" in key:
             print(key, ": ", "{:.6f}".format(value * 627.5), " ({:.2f})".format(value / energy * 100))

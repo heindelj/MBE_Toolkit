@@ -1,4 +1,4 @@
-from Integrator import Integrator
+from .Integrator import Integrator
 from types import FunctionType
 import numpy as np
 

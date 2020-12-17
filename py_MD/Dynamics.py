@@ -1,5 +1,5 @@
-from Logger import Logger
-from Integrator import Integrator
+from .Logger import Logger
+from .Integrator import Integrator
 
 from typing import Callable
 import numpy as np

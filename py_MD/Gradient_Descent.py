@@ -1,7 +1,7 @@
-from Fragments import Fragments
-from Potential import *
-from MBE_Potential import MBE_Potential
-from Compute_Hessian import Hessian
+from .Fragments import Fragments
+from .Potential import *
+from .MBE_Potential import MBE_Potential
+from .Compute_Hessian import Hessian
 import numpy as np
 import sys, time
 

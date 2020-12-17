@@ -8,10 +8,10 @@ import sys
 import time
 import uuid
 from pathlib import Path
-from Fragments import Fragments
-from Potential import *
-from MBE_Potential import MBE_Potential
-from read_geometries import read_geoms
+from .Fragments import Fragments
+from .Potential import *
+from .MBE_Potential import MBE_Potential
+from .read_geometries import read_geoms
 
 class Constants:
     """Helps me keep track of constants and conversions,

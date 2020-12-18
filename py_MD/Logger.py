@@ -26,7 +26,8 @@ class Logger:
 
         # check the type of the value and log appropriately
         self.special_logging_functions = {
-            np.ndarray: self.log_matrix
+            np.ndarray: self.log_matrix,
+            np.float64: self.log_float
         }
 
         self.special_logging_keys = [
@@ -81,6 +82,16 @@ class Logger:
                     for value in values:
                         f.write(f" {value:.7f} ")
                     f.write('\n')
+
+    def log_float(self, key):
+        """
+        Special method for logging floats. This is basically to record the many-body energies, but is also a default logger.
+        """
+        values = self.data_log[key]
+        with open(self.file_log[key], 'a') as f:
+            for value in values:
+                f.write(f" {value:.7f}\n")
+
 
     def log_matrix(self, key):
         """Special method for logging a matrix. Each row is assumed to correspond to the

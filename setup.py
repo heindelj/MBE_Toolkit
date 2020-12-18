@@ -12,7 +12,7 @@ setuptools.setup(
      long_description=long_description,
      long_description_content_type="text/markdown",
      url="https://github.com/heindelj/pyMD",
-     download_url = 'https://github.com/heindelj/pyMD/archive/v_03.tar.gz',
+     download_url = 'https://github.com/heindelj/pyMD/archive/030.tar.gz',
      install_requires=['numpy', 'tidynamics'],
      packages=setuptools.find_packages(),
      classifiers=[

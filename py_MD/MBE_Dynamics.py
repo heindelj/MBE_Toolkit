@@ -58,14 +58,14 @@ if __name__ == '__main__':
     ####### INTEGRATORS FOR EQUILIBRATION AND PRODUCTION #######
     thermostatted_equilibration = Langevin_Thermostat(geometry, 
                                      atom_masses, 
-                                     mbe_ff.evaluate_on_geometry,
+                                     mbe_ff.evaluate_on_geometry_parallel,
                                      dt=ts,
                                      temperature=input_temperature,
                                      alpha=25.0)
 
     nve_production = Velocity_Verlet(geometry,
                                      atom_masses,
-                                     mbe_ff.evaluate_on_geometry,
+                                     mbe_ff.evaluate_on_geometry_parallel,
                                      temperature=input_temperature,
                                      dt=ts)
 

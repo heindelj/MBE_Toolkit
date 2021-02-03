@@ -187,3 +187,43 @@ class MBPol(Potential):
     
     def __call__(self, coords):
         return self.evaluate(coords)
+
+class Protonated_Water(Potential):
+    def __init__(self, num_waters: int, library_path: str, do_init=True):
+        self.num_waters = num_waters
+        self.library_path = library_path
+        self.work_dir = os.getcwd()
+        sys.path.insert(0, self.library_path)
+        os.chdir(self.library_path)
+        self.module = importlib.import_module("Protonated_Water")
+        self.energy_function = getattr(self.module, "get_energy")
+        self.energy_and_gradient_function = getattr(self.module, "get_energy_and_gradients")
+        self.init_function = getattr(self.module, "initialize_potential")
+        if do_init:
+            self.init_function(self.num_waters)
+        os.chdir(self.work_dir)
+
+    def evaluate(self, coords, get_gradients=True):
+        if get_gradients:
+            return self.get_energy(coords)
+        else:
+            return self.get_energy_and_gradients(coords)
+
+    def get_energy(self, coords):
+        """
+        Gets potential energy in hartree from coords.
+        """
+        os.chdir(self.library_path)
+        energy = self.energy_function(coords.T)
+        os.chdir(self.work_dir)
+        return energy
+    
+    def get_energy_and_gradients(self, coords):
+        """
+        Gets potential energy in hartree and gradients in hartree per bohr from coords.
+        """
+        os.chdir(self.library_path)
+        energy, gradients = self.energy_and_gradient_function(coords.T)
+        os.chdir(self.work_dir)
+        gradients = np.reshape(gradients, np.shape(coords))
+        return energy, gradients

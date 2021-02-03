@@ -3,10 +3,11 @@ from .MBE_Potential import MBE_Potential
 from ase.calculators.calculator import Calculator, all_changes
 from ase import Atoms
 from ase.units import Hartree, Bohr
+import sys
 
 class PotentialCalculator(Calculator):
     """
-    Wraps the py_MD Potential object as an ASE calculator.
+    Wraps the py_MD Potential object as an ASE calculator returing energy and forces
     """
     implemented_properties = ['forces', 'energy']
     nolabel = True
@@ -20,16 +21,16 @@ class PotentialCalculator(Calculator):
             properties = self.implemented_properties
 
         if type(atoms) is not Atoms:
-            atoms = Atoms(Atoms(["O", "H", "H"] * (len(atoms) // 3), atoms))
-
+            print("Can only evaluate energy of an ASE Atoms object.")
+            sys.exit(1)
         # call the base class to initialize things
         Calculator.calculate(self, atoms, properties, system_changes)
         
         # Call pymd potential
-        energy, forces = self.pymd_potential.evaluate(atoms.get_positions())
+        energy, gradients = self.pymd_potential.evaluate(atoms.get_positions())
         self.results['energy'] = energy * Hartree
-        self.results['forces'] = forces * Hartree / Bohr
-        return energy, forces
+        self.results['forces'] = -gradients * Hartree / Bohr
+        return energy, -gradients
 
 class MBEPotentialCalculator(Calculator):
     """

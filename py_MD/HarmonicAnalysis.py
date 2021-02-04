@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import numpy as np
 import numpy.linalg as la
 import subprocess as sub
@@ -153,67 +151,9 @@ class HarmonicAnalysis:
         hessian = self.genHess()
         self.diagonalize(hessian)
 
-
-def partridgePot(cds):
-    """Calls executable calc_h2o_pot, which takes in the file hoh_coord.dat and saves the energies to hoh_pot.dat
-    hoh_coord.dat has the form
-    nGeoms
-    hx hy hz
-    hx hy hz
-    ox oy oz
-    h'x h'y h'z
-    h'x h'y h'z
-    o'x o'y o'z
-    h''x h''y h''z
-    h''x h''y h''z
-    o''x o''y o''z
-    ...
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Where nGeoms is an integer corresponding to the number of geometries you pass in
-    """
-    np.savetxt("PES0/hoh_coord.dat", cds.reshape(cds.shape[0] * cds.shape[1], cds.shape[2]), header=str(len(cds)),
-               comments="")
-    sub.run('./calc_h2o_pot', cwd='PES0')
-    return np.loadtxt("PES0/hoh_pot.dat")-(  -1.9109019308531233E-006)
-
-def TTM21FPot(cds):
-    '''
-    Calls executable TTM21F_energy.x, which takes in file hoh_coord.dat and saves the energies to hoh_pot.dat.
-    The potential expects water molecules in O H H order.
-    '''
-    grid_energies = []
-    #write hoh_coord.dat
-    for iGeom, atoms__ in enumerate(cds):
-        N=len(cds[iGeom])
-        atoms__ = np.copy(cds[iGeom])
-        atoms__ = [str(atoms__[x]*.529177) for x in range(len(atoms__))]
-        for i in range(len(atoms__)):
-            if i % 3 == 0:
-                atoms__[i] = "O " + atoms__[i]
-            else:
-                atoms__[i] = "H " + atoms__[i]
-        hoh_coord = str(uuid.uuid4())
-        hoh_pot = str(uuid.uuid4())
-        with open(hoh_coord, 'w') as f:
-            f.write(str(N) + "\n")
-            f.write("\n")
-            for line in atoms__:
-                printable = line.replace("[","").replace("]","")
-                f.write(printable)
-                f.write("\n")
-        #evaluate potential and return energy
-        with open(hoh_pot, 'w') as outfile:
-            sub.call(["TTM21F_energy.x", hoh_coord], stdout=outfile)
-            proc=sub.Popen(["grep","Energy", hoh_pot],stdout=sub.PIPE)
-            energy = proc.stdout.read()
-            grid_energies.append(float(energy.split()[3])*0.0015936011) #convert kcal/mol to a.u.
-        sub.call(["rm", hoh_coord])
-        sub.call(["rm", hoh_pot])
-    return np.array(grid_energies)
-
 class Potential_Wrapper:
     """
-    Wraps an existing function that only calls a single geometry to returns many energies.
+    Wraps an existing function that only calls a single geometry to returns many energies. pot_function should only return the energy, not the energy and gradients.
     """
     def __init__(self, pot_function, to_angstrom=True):
         self.pot_function = pot_function
@@ -222,34 +162,8 @@ class Potential_Wrapper:
     def evaluate(self, cds):
         grid_energies = []
         for atoms in cds:
-            grid_energies.append(self.pot_function(atoms / 1.88973)[0])
+            if self.to_angstrom:
+                grid_energies.append(self.pot_function(atoms / 1.88973))
+            else:
+                grid_energies.append(self.pot_function(atoms))
         return np.asarray(grid_energies)
-
-if __name__ == '__main__':
-    try:
-        infile = sys.argv[1]
-    except:
-        print ("Expecting xyz formatted input file as command line argument. Exiting.")
-        sys.exit(1)
-    dxx = 1.e-2
-    """Everything is in  Atomic Units going into generating the Hessian."""
-    #read in all the geometries
-    #header, labels, geoms = read_geoms(infile)
-    fragments = Fragments(infile)
-    geom = np.vstack(fragments.fragments)
-    #ttm21f = TTM(["ttm*"], "ttm", "ttm_from_f2py", 21)
-    mbpol = MBPol()
-    mbe_ff = MBE_Potential(5, fragments, mbpol, return_extras=False)
-    pot = Potential_Wrapper(mbe_ff.evaluate_on_geometry)
-    # Perform harmonic analysis on geometry
-    geom = Constants.convert(geom, \
-    "angstroms",to_AU=True) #To Bohr from angstroms
-    #atoms = labels[iGeom]
-    atoms = ["O", "H", "H"] * 10
-    HA_h2o = HarmonicAnalysis(eqGeom=geom,
-                            atoms=atoms,
-                            potential=pot.evaluate,
-                            dx=dxx,
-                            ofile=Path(infile)
-                            )
-    HarmonicAnalysis.run(HA_h2o)

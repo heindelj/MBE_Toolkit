@@ -54,7 +54,7 @@ class Potential:
             os.chdir(self.path_to_library)
             sys.path.insert(0, os.getcwd())
             # this branch is for loading a function from a python module
-            if self.name_of_module:
+            if self.name_of_module is not None:
                 try:
                     module = importlib.import_module(self.name_of_module)
                     self.potential_function = getattr(module, self.name_of_function)

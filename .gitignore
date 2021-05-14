@@ -1,6 +1,6 @@
-py_MD/__pycache__
+MBE_Toolkit/__pycache__
 build/
-py_MD.egg-info
 dist
 potentials/f2py_binding_ttm/**
 potentials/legacy_mbpol-master/**
+src/MBE_Toolkit.code-workspace

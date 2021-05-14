@@ -10,11 +10,12 @@ class MBE_Potential:
     Implements an MBE potential which calls out to a Potential object and
     parses the output energy and forces
     """
-    def __init__(self, highest_order: int, fragments: Fragments, potential: Potential, nproc=8, return_mb_terms=False):
+    def __init__(self, highest_order: int, fragments: Fragments, potential: Potential, nproc=8, return_order_n=None, return_mb_terms=False):
         self.highest_order = highest_order
         self.fragments = fragments
         self.potential = potential
         self._pool = Pool(nproc)
+        self.return_order_n = return_order_n # an integer which allows the n-body term to be returned rather than the total.
         self.return_mb_terms = return_mb_terms
     
     def log_mb_terms(self, nbody_energies, nbody_forces):
@@ -92,7 +93,10 @@ class MBE_Potential:
         #print(total_forces * 627.5 / 1.88973)
 
         if not self.return_mb_terms:
-            return total_energy, total_forces
+            if self.return_order_n == None:
+                return total_energy, total_forces
+            else:
+                return nbody_energies[self.return_order_n-1], nbody_forces[self.return_order_n-1]
         else:
             return total_energy, total_forces, self.log_mb_terms(nbody_energies, nbody_forces)
 
@@ -163,7 +167,10 @@ class MBE_Potential:
         #print(total_forces * 627.5 / 1.88973)
 
         if not self.return_mb_terms:
-            return total_energy, total_forces
+            if self.return_order_n == None:
+                return total_energy, total_forces
+            else:
+                return nbody_energies[self.return_order_n-1], nbody_forces[self.return_order_n-1]
         else:
             return total_energy, total_forces, self.log_mb_terms(nbody_energies, nbody_forces)
 
@@ -208,7 +215,7 @@ if __name__ == '__main__':
     
     fragments = Fragments(ifile)
     ttm21f = TTM("/home/heindelj/dev/python_development/MBE_Toolkit/bin/")
-    #mbpol = MBPol("/home/heindelj/Research/Sotiris/MBE_Dynamics/MBE_Dynamics_Home_Code/pyMD/bin")
+    #mbpol = MBPol("/home/heindelj/dev/python_development/MBE_Toolkit/bin/")
     mbe_order=6
     mbe_ff = MBE_Potential(mbe_order, fragments, ttm21f, return_mb_terms=True)
     
@@ -218,5 +225,6 @@ if __name__ == '__main__':
     for key, value in mb_terms.items():
         if "energy" in key:
             print(key, ": ", "{:.6f}".format(value * 627.5), " ({:.2f})".format(value / energy * 100))
-    print("Total Energy: ", "{:.6f}".format(energy * 627.5), "kcal/mol")
+    print("Total Energy MBE: ", "{:.6f}".format(energy * 627.5), "kcal/mol")
+    print("Total Energy Full: ", "{:.6f}".format(ttm21f.evaluate(np.vstack(fragments.fragments))[0] * 627.5), "kcal/mol")
     print(time.time() - start, " seconds")

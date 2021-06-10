@@ -1,4 +1,4 @@
-MBE_Toolkit/__pycache__
+MBE_Toolkit/__pycache__/**
 build/
 dist
 potentials/f2py_binding_ttm/**

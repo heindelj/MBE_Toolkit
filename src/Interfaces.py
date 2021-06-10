@@ -32,6 +32,11 @@ class PotentialCalculator(Calculator):
         self.results['forces'] = -gradients * Hartree / Bohr
         return energy, -gradients
 
+class NWChemCalculator(Calculator):
+    """
+    Calls 
+    """
+
 class MBEPotentialCalculator(Calculator):
     """
     Wraps the py_MD Potential object as an ASE calculator.

@@ -4,3 +4,6 @@ dist
 potentials/f2py_binding_ttm/**
 potentials/legacy_mbpol-master/**
 src/MBE_Toolkit.code-workspace
+nwchem*
+nwchem/**
+nwchem

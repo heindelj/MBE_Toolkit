@@ -7,3 +7,4 @@ src/MBE_Toolkit.code-workspace
 nwchem*
 nwchem/**
 nwchem
+*.pyc

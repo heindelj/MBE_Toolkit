@@ -8,3 +8,4 @@ nwchem*
 nwchem/**
 nwchem
 *.pyc
+src/__pycache__/

@@ -1,12 +1,34 @@
 import sys, os, subprocess, importlib
 from ase.atoms import Atoms
 from ase.units import Bohr, Hartree
+from ase.calculators.nwchem import NWChem
 import numpy as np
 import ctypes
 
 from numpy.core.fromnumeric import size
 
 __all__ = ['Potential', 'TTM', 'MBPol']
+
+# TODO: Rewrite the Fragments class to take Atoms objects.
+#       Move NWChem Potential to be a simple wrapper on the NWChem calculator which
+#       comes with ASE and mame this an an NWChemCalculator(Calculator).
+#       Then, it should be simple to do the MBE (possibly even in parallel)
+#       using the Fragments objects.
+#       
+
+def get_ASE_NWChem_Potential(theory: str, basis, xc=None, task='gradient', **kwargs):
+        """
+        theory is a string denoting the theory to use.
+            Options are: 'dft', 'scf', 'mp2', 'ccsd', 'tce', 'tddft', 'pspw', 'band', 'paw'
+        basis is either a string or a dict. If a string, all of the atoms will have the same basis set.
+        If a dict, it should have the form: basis={'O': '3-21G',
+                                                   'Si': '6-31g'}
+        xc is a string choosing an exchange-correlation functional. This is only required if theory == 'dft'
+        """
+        if theory == 'dft':
+            return NWChem(theory=theory, basis=basis, task=task, xc=xc)
+        else:
+            return NWChem(theory=theory, basis=basis, task=task)
 
 class Potential:
     """Abstract base class for potential energy surfaces. A single function, evaluate(),
@@ -81,51 +103,6 @@ class Potential:
             else:
                 print("We need either a library name or a module name. Please provide one.")
                 sys.exit(1)
-
-class NWChem(Potential):
-    from ase.calculators.nwchem import NWChem as NWChem_ASE
-    def __init__(self, coords, theory: str, basis, xc=None, task='gradient', labels=None, **kwargs):
-        """
-        self.theory is a string denoting the theory to use.
-            Options are: 'dft', 'scf', 'mp2', 'ccsd', 'tce', 'tddft', 'pspw', 'band', 'paw'
-        self.basis is either a string or a dict. If a string, all of the atoms will have the same basis set.
-        If a dict, it should have the form: basis={'O': '3-21G',
-                                                   'Si': '6-31g'}
-        xc is a string choosing an exchange-correlation functional. This is only required if theory == 'dft'
-        """
-        self.path_to_library = None
-        super().__init__()
-        assert (coords.shape[0] % 3) == 0
-        if labels is None:
-            self.atoms = Atoms("OHH" * int(coords.shape[0] / 3), coords)
-        else:
-            self.atoms = Atoms(labels, coords)
-        self.labels = labels
-        self.theory = theory
-        self.basis = basis
-        self.xc = xc
-        self.task = task
-        if self.theory == 'dft':
-            self.atoms.calc = NWChem.NWChem_ASE(theory=self.theory, basis=self.basis, xc=self.xc, task=self.task)
-        else:
-            self.atoms.calc = NWChem.NWChem_ASE(theory=self.theory, basis=self.basis, task=self.task)
-    
-    def evaluate(self, coords, labels=None):
-        """
-        Evaluates the energy and gradients using NWChem via ase.
-        Takes coordinates as list of lists or numpy array and uses the attached NWChem calculator.
-        """
-        if coords.shape != self.atoms.get_positions().shape:
-            if labels is None:
-                self.atoms = Atoms("OHH"*size(coords)[1], coords, calculator=self.atoms.get_calculator())
-            else:
-                assert len(labels) == size(coords)[1]
-                self.atoms = Atoms(labels, coords, calculator=self.atoms.get_calculator())
-        else:
-            self.atoms.set_positions(coords)
-        forces = self.atoms.get_forces()
-        return self.atoms.get_potential_energy() / Hartree, forces / Hartree * Bohr
-
 
 class TTM(Potential):
     def __init__(self, path_to_library: str, name_of_function="ttm_from_f2py", name_of_module="ttm", model=21):

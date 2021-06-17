@@ -1,12 +1,18 @@
 import numpy as np
 from tempfile import NamedTemporaryFile
+from ase.atoms import Atoms
 import itertools
 
 class Fragments:
-    def __init__(self, xyz_file):
+    def __init__(self, xyz_file, calculator):
         self.xyz_file = xyz_file
-        self.header, self.atom_labels, self.fragments = self.get_fragments_from_xyz_file()
-    
+        header, self.atom_labels, self.fragment_coords = self.get_fragments_from_xyz_file()
+        self.flattened_atom_labels = list(itertools.chain(*self.atom_labels))
+        self.fragments = [Atoms(self.atom_labels[i], self.fragment_coords[i]) for i in range(len(self.atom_labels))]
+
+        for frag in self.fragments:
+            frag.calc = calculator
+
     def fragment_geometry(self, geometry):
         """Takes an array of cartesian coordinates and splits it into fragments
         according to the shape of self.fragments.
@@ -14,7 +20,9 @@ class Fragments:
         Args:
             geometry (ndarray): Nx3 array of cartesian coordinates
         """
-        self.fragments = np.reshape(geometry, self.fragments.shape)
+        fragmented_geom = np.reshape(geometry, self.fragment_coords.shape)
+        [self.fragments[i].set_chemical_symbols(self.atom_labels[i]) for i in range(len(self.atom_labels))]
+        [self.fragments[i].set_positions(fragmented_geom[i]) for i in range(len(self.atom_labels))]
 
     def write_fragment_to_temporary_file(self, fragment, array_indices):
         """Takes a fragment which is just the matrix of xyz coordinates and prints them 
@@ -55,7 +63,7 @@ class Fragments:
         for i, frag in enumerate(self.fragments):
             if i-1 > -1:
                 distance_until_now = distance_to_nth_fragment[i-1]
-            distance_to_nth_fragment.append(frag.shape[0] + distance_until_now)
+            distance_to_nth_fragment.append(frag.get_positions().shape[0] + distance_until_now)
             distance_to_nth_fragment[i] -= distance_to_nth_fragment[0]
 
         atom_index_array = []
@@ -67,7 +75,7 @@ class Fragments:
         return atom_index_array
 
     def make_nmers(self, mbe_order):
-        """Returns a list of numpy arrays of all n-mers of order mbe_order.
+        """Returns a list of Atoms objects of all n-mers of order mbe_order.
 
         e.g. If mbe_order=2, returns a list of all dimers made from self.fragments.fragments
 
@@ -75,9 +83,25 @@ class Fragments:
             mbe_order (int): Order of the mbe to form nmers of (monomers, dimers, etc.)
         """
         combinations = list(itertools.combinations(self.fragments, mbe_order))
-        for i, arrays in enumerate(combinations):
-            combinations[i] = np.vstack(tuple(arrays))
+        for i, atoms_objects in enumerate(combinations):
+            combinations[i] = self.merge_atoms_objects(atoms_objects)
         return combinations
+
+    @staticmethod
+    def merge_atoms_objects(atoms_list):
+        """
+        atoms_list is a list of Atoms objects for which we will merge the Atoms
+        by combining the positions and atom labels of each Atoms object.
+        Attaches the calculator to the composite Atoms which are merged.
+        """
+        positions = []
+        labels = []
+        for atoms in atoms_list:
+            positions.append(atoms.get_positions())
+            labels.append(atoms.get_chemical_symbols())
+        atoms = Atoms(list(itertools.chain(*labels)), np.array(list(itertools.chain(*positions))))
+        atoms.calc = atoms_list[0].calc
+        return atoms
 
     def get_fragments_from_xyz_file(self):
         """Reads an xyz file containing a single geometry where fragments are delimited by '--'.
@@ -100,16 +124,18 @@ class Fragments:
 
                     while True:
                         fragment__ = []
+                        label__ = []
                         # get first line of coordinates
                         coord_line = ifile.readline()
                         if not coord_line:
                             break
                         while '--' not in coord_line and coord_line:
                             line = coord_line.split()
-                            atomLabels.append(line[0])
+                            label__.append(line[0])
                             fragment__.append(list(map(float, line[1:4])))
                             coord_line = ifile.readline()
                         fragments.append(np.array(fragment__))
+                        atomLabels.append(label__)
         return header, atomLabels, np.array(fragments, dtype=np.float64)
 
     def write_geoms(self, optional_output="", ofile=None):
